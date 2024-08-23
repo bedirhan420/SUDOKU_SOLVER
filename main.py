@@ -5,7 +5,7 @@ import cv2
 import numpy as np
 from sudoku_solver.solver import *
 
-path_image = "Resources/2.jpg"
+path_image = "Resources/1.jpg"
 height_img = 450
 width_img = 450
 model = initialize_prediction_model()

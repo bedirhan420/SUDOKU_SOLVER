@@ -3,7 +3,10 @@ import numpy as np
 import cv2
 import io
 from PIL import Image
+import json
+import base64
 
+from .enums import HttpStatusCodes
 from sudoku_solver.solver import solve
 from utils.helpers import *
 
@@ -14,7 +17,7 @@ def solve_sudoku():
     file = request.files['file']
     
     if not file:
-        return jsonify({'error': 'No file provided'}), 400
+        return jsonify({'error': 'No file provided'}), HttpStatusCodes.BAD_REQUEST
 
     # Load the image
     image = Image.open(io.BytesIO(file.read()))
@@ -57,7 +60,7 @@ def solve_sudoku():
             solve(board)
         except Exception as e:
             print(f"Error solving sudoku: {e}")
-            return jsonify({'error': 'Error solving sudoku'}), 500
+            return jsonify({'error': 'Error solving sudoku'}), HttpStatusCodes.INT_SERVER_ERROR
 
         flat_list = [item for sublist in board for item in sublist]
         solved_numbers = flat_list * pos_array
@@ -71,12 +74,17 @@ def solve_sudoku():
         img_detected_digits = draw_grid(img_detected_digits)
         img_solved_digits = draw_grid(img_solved_digits)
 
-        return jsonify({
-            'solution': numbers.tolist()
-        })
+        _, img_encoded = cv2.imencode('.png', inv_perspective)
+        img_bytes = io.BytesIO(img_encoded)
+
+        img_base64 = base64.b64encode(img_bytes.getvalue()).decode('utf-8')
+        numbers_json = json.dumps(numbers.tolist())
+        solved_numbers_json = json.dumps(solved_numbers.tolist())
+
+        return jsonify({'solution': numbers_json, 'image': img_base64,"solved_numbers":solved_numbers_json})
 
     else:
-        return jsonify({'error': 'No Sudoku Found'}), 404
+        return jsonify({'error': 'No Sudoku Found'}), HttpStatusCodes.NOT_FOUND
 
 if __name__ == '__main__':
     app.run(debug=False, threaded=True)
