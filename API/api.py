@@ -12,6 +12,10 @@ from utils.helpers import *
 
 app = Flask(__name__)
 
+@app.route("/get",methods=["POST"])
+def get_hello_word():
+    return jsonify({"result":"Hello World"}),HttpStatusCodes.OK
+
 @app.route('/solve', methods=['POST'])
 def solve_sudoku():
     file = request.files['file']
