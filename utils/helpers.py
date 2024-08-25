@@ -3,7 +3,7 @@ import numpy as np
 from tensorflow.keras.models import load_model
 
 def initialize_prediction_model():
-    model_path =r'C:\Users\bedir\Models\sudoku_solver_model_better.h5'
+    model_path = "../sudoku_solver_model.h5"
     model = load_model(model_path)
     return model
 
