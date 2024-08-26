@@ -1,30 +1,57 @@
 import cv2
 import numpy as np
 from tensorflow.keras.models import load_model
+import matplotlib.pyplot as plt
+
 
 def initialize_prediction_model():
-    model_path = "../sudoku_solver_model.h5"
-    model = load_model(model_path)
-    return model
+    try:
+        model_path = r'C:\Users\bedir\Models\model_deneme.h5'
+        model = load_model(model_path)
+        print("Model başarıyla yüklendi.")
+        return model
+    except Exception as e:
+        print("Model yükleme hatası:", e)
 
-def get_prediction(boxes, model):
+def preprocess_image(image):
+    # Resmi numpy array'e dönüştür
+    img = np.asarray(image)
+    
+    # Resmi normalize et
+    img = img / 255.0
+    
+    # Resmi yeniden boyutlandır ve şekillendir
+    img = cv2.resize(img, (28, 28))
+    img = img.reshape(1, 28, 28, 1)
+    
+    return img
+
+def get_prediction(boxes, model, threshold=0.7):
     result = []
     for image in boxes:
-        ## PREPARE IMAGE
-        img = np.asarray(image)
-        img = img[4:img.shape[0] - 4, 4:img.shape[1] - 4]
-        img = cv2.resize(img, (28, 28))
-        img = img / 255.0
-        img = img.reshape(1, 28, 28, 1)
-        ## GET PREDICTION
-        predictions = model.predict(img)
-        classIndex = np.argmax(predictions, axis=-1)  # Get the index of the max probability
-        probabilityValue = np.max(predictions)         # Get the max probability value
-        ## SAVE TO RESULT
-        if probabilityValue > 0.8:
-            result.append(classIndex[0])
-        else:
-            result.append(0)
+        try:
+            # Görüntü ön işleme
+            img = preprocess_image(image)
+            # plt.imshow(img[0], cmap='gray')  # img[0] because img is likely shaped as (1, 28, 28, 1) or (1, 28, 28)
+            # plt.title("Processed Image")
+            # plt.show()
+            # Tahmin yapma
+            predictions = model.predict(img)
+            classIndex = np.argmax(predictions, axis=-1)
+            probabilityValue = np.max(predictions)
+            
+            # Tahmini sonuçları ekleme
+            if probabilityValue > threshold:
+                result.append(classIndex[0])
+            else:
+                result.append(0)
+
+            print(probabilityValue)
+        
+        except Exception as e:
+            print(f"Error processing image: {e}")
+            result.append((0, 0))
+    
     return result
 
 def preprocess(img):

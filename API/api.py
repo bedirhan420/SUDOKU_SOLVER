@@ -5,6 +5,7 @@ import io
 from PIL import Image
 import json
 import base64
+import logging
 
 from .enums import HttpStatusCodes
 from sudoku_solver.solver import solve
@@ -12,20 +13,29 @@ from utils.helpers import *
 
 app = Flask(__name__)
 
-@app.route("/get",methods=["POST"])
-def get_hello_word():
-    return jsonify({"result":"Hello World"}),HttpStatusCodes.OK
+logging.basicConfig(level=logging.DEBUG)
+
+@app.route("/get", methods=["GET"])
+def get_hello_world():
+    return jsonify({"result": "Hello World"})
 
 @app.route('/solve', methods=['POST'])
 def solve_sudoku():
-    file = request.files['file']
-    
-    if not file:
-        return jsonify({'error': 'No file provided'}), HttpStatusCodes.BAD_REQUEST
+    if 'file' not in request.files:
+        logging.error('No file part in the request')
+        return jsonify({'error': 'No file part'}), HttpStatusCodes.BAD_REQUEST
 
-    # Load the image
-    image = Image.open(io.BytesIO(file.read()))
-    image = np.array(image)
+    file = request.files['file']
+    if file.filename == '':
+        logging.error('No selected file')
+        return jsonify({'error': 'No selected file'}), HttpStatusCodes.BAD_REQUEST
+
+    try:
+        image = Image.open(io.BytesIO(file.read()))
+        image = np.array(image)
+    except Exception as e:
+        logging.error(f"Error processing image: {e}")
+        return jsonify({'error': 'Error processing image'}), HttpStatusCodes.BAD_REQUEST
 
     height_img = 450
     width_img = 450
@@ -48,13 +58,14 @@ def solve_sudoku():
         pts2 = np.float32([[0, 0], [width_img, 0], [0, height_img], [width_img, height_img]])
         matrix = cv2.getPerspectiveTransform(pts1, pts2)
         img_warp_colored = cv2.warpPerspective(img, matrix, (width_img, height_img))
+        img_warp_colored = cv2.bitwise_not(img_warp_colored)
         img_warp_colored = cv2.cvtColor(img_warp_colored, cv2.COLOR_BGR2GRAY)
 
         img_detected_digits = img_blank.copy()
         img_solved_digits = img_blank.copy()
         boxes = split_boxes(img_warp_colored)
         numbers = get_prediction(boxes, model)
-        
+
         img_detected_digits = display_numbers(img_detected_digits, numbers, color=(255, 0, 255))
         numbers = np.asarray(numbers)
         pos_array = np.where(numbers > 0, 0, 1)
@@ -63,7 +74,7 @@ def solve_sudoku():
         try:
             solve(board)
         except Exception as e:
-            print(f"Error solving sudoku: {e}")
+            logging.error(f"Error solving sudoku: {e}")
             return jsonify({'error': 'Error solving sudoku'}), HttpStatusCodes.INT_SERVER_ERROR
 
         flat_list = [item for sublist in board for item in sublist]
@@ -85,7 +96,7 @@ def solve_sudoku():
         numbers_json = json.dumps(numbers.tolist())
         solved_numbers_json = json.dumps(solved_numbers.tolist())
 
-        return jsonify({'solution': numbers_json, 'image': img_base64,"solved_numbers":solved_numbers_json})
+        return jsonify({'solution': numbers_json, 'image': img_base64, 'solved_numbers': solved_numbers_json})
 
     else:
         return jsonify({'error': 'No Sudoku Found'}), HttpStatusCodes.NOT_FOUND
