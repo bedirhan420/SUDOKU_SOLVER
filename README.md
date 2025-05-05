@@ -15,7 +15,7 @@ This project is a complete solution pipeline that takes an image of a Sudoku puz
 ## 📷 Example
 
 **Upload Image:**
-![Sudoku Upload](examples/main.jpg)
+![Sudoku Upload](examples/main..jpg)
 
 ![Sudoku Input](examples/upload.jpg)
 
