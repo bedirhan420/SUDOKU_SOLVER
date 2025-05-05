@@ -1,5 +1,7 @@
 # 🧩 Sudoku Solver from Image
 
+Google Play Store linki : https://play.google.com/store/apps/details?id=com.mehmetaliozek.sudokusolver
+
 This project is a complete solution pipeline that takes an image of a Sudoku puzzle, extracts the digits using computer vision, and solves the puzzle using a backtracking algorithm. Built using Python, OpenCV, Tensorflow,NumPy and Flask.
 
 ## 📌 Features
@@ -28,7 +30,6 @@ This project is a complete solution pipeline that takes an image of a Sudoku puz
 
 - Python 3.x  
 - OpenCV  
-- Pytesseract (Tesseract OCR)  
+- Tensorflow
 - NumPy  
 - Matplotlib (optional, for visualization)
-Google Play Store linki : https://play.google.com/store/apps/details?id=com.mehmetaliozek.sudokusolver
